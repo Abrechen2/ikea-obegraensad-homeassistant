@@ -12,6 +12,8 @@ import aiohttp
 from .const import (
     API_STATUS,
     API_SET_BRIGHTNESS,
+    API_SET_AUTO_BRIGHTNESS,
+    API_SET_TIMEZONE,
     API_EFFECT,
     DEFAULT_TIMEOUT,
     DEFAULT_SCAN_INTERVAL,
@@ -101,5 +103,60 @@ class IkeaObegraensadDataUpdateCoordinator(DataUpdateCoordinator):
                         return False
         except Exception as err:
             _LOGGER.error(f"Error setting effect: {err}")
+            return False
+
+    async def async_set_auto_brightness(
+        self,
+        enabled: bool,
+        min_brightness: int | None = None,
+        max_brightness: int | None = None,
+        sensor_min: int | None = None,
+        sensor_max: int | None = None,
+    ) -> bool:
+        """Set auto-brightness on/off with optional configuration."""
+        try:
+            params: dict[str, str] = {"enabled": "true" if enabled else "false"}
+            
+            # Only add parameters that are provided
+            if min_brightness is not None:
+                params["min"] = str(min_brightness)
+            if max_brightness is not None:
+                params["max"] = str(max_brightness)
+            if sensor_min is not None:
+                params["sensorMin"] = str(sensor_min)
+            if sensor_max is not None:
+                params["sensorMax"] = str(sensor_max)
+            
+            async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=DEFAULT_TIMEOUT)) as session:
+                async with session.get(
+                    f"{self.base_url}{API_SET_AUTO_BRIGHTNESS}",
+                    params=params
+                ) as response:
+                    if response.status == 200:
+                        await self.async_request_refresh()
+                        return True
+                    else:
+                        _LOGGER.error(f"Failed to set auto-brightness: HTTP {response.status}")
+                        return False
+        except Exception as err:
+            _LOGGER.error(f"Error setting auto-brightness: {err}")
+            return False
+
+    async def async_set_timezone(self, timezone: str) -> bool:
+        """Set timezone."""
+        try:
+            async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=DEFAULT_TIMEOUT)) as session:
+                async with session.get(
+                    f"{self.base_url}{API_SET_TIMEZONE}",
+                    params={"tz": timezone}
+                ) as response:
+                    if response.status == 200:
+                        await self.async_request_refresh()
+                        return True
+                    else:
+                        _LOGGER.error(f"Failed to set timezone: HTTP {response.status}")
+                        return False
+        except Exception as err:
+            _LOGGER.error(f"Error setting timezone: {err}")
             return False
 
