@@ -18,6 +18,26 @@ from .coordinator import IkeaObegraensadDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
+
+def get_device_info(entry: ConfigEntry, coordinator: IkeaObegraensadDataUpdateCoordinator) -> dict[str, Any]:
+    """Get device info for entities."""
+    host = entry.data.get("host", "")
+    port = entry.data.get("port", DEFAULT_PORT)
+    
+    # Try to get firmware version from coordinator data
+    sw_version = "Unknown"
+    if coordinator.data:
+        sw_version = coordinator.data.get("firmwareVersion", coordinator.data.get("version", "Unknown"))
+    
+    return {
+        "identifiers": {(DOMAIN, entry.entry_id)},
+        "name": entry.data.get("name", "Ikea Clock"),
+        "manufacturer": "IKEA",
+        "model": "Obegraensad",
+        "sw_version": sw_version,
+        "configuration_url": f"http://{host}:{port}",
+    }
+
 PLATFORMS: list[Platform] = [
     Platform.SWITCH,
     Platform.SELECT,

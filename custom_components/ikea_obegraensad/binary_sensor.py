@@ -19,6 +19,7 @@ from .const import (
     KEY_DISPLAY_ENABLED,
 )
 from .coordinator import IkeaObegraensadDataUpdateCoordinator
+from . import get_device_info
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -67,6 +68,7 @@ class IkeaObegraensadBinarySensor(CoordinatorEntity, BinarySensorEntity):
         self._attr_unique_id = f"{entry.entry_id}_{description.key}"
         base_name = entry.data.get("name", "Ikea Clock")
         self._attr_name = f"{base_name} {description.name}"
+        self._attr_device_info = get_device_info(entry, coordinator)
 
     @property
     def is_on(self) -> bool | None:

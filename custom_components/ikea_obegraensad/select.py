@@ -12,6 +12,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN, EFFECTS, KEY_CURRENT_EFFECT, TIMEZONES, KEY_TIMEZONE
 from .coordinator import IkeaObegraensadDataUpdateCoordinator
+from . import get_device_info
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -44,6 +45,7 @@ class IkeaObegraensadEffectSelect(CoordinatorEntity, SelectEntity):
         self._attr_name = f"{entry.data.get('name', 'Ikea Clock')} Effect"
         self._attr_icon = "mdi:shape"
         self._attr_options = EFFECTS
+        self._attr_device_info = get_device_info(entry, coordinator)
 
     @property
     def current_option(self) -> str | None:
@@ -73,6 +75,7 @@ class IkeaObegraensadTimezoneSelect(CoordinatorEntity, SelectEntity):
         self._attr_name = f"{entry.data.get('name', 'Ikea Clock')} Timezone"
         self._attr_icon = "mdi:clock-time-three"
         self._attr_options = list(TIMEZONES)
+        self._attr_device_info = get_device_info(entry, coordinator)
 
     @property
     def current_option(self) -> str | None:

@@ -13,6 +13,8 @@ Home Assistant Integration für die Ikea Obegraensad LED Matrix Uhr.
 - **Zeitzone**: Konfiguriere die Zeitzone für die Uhr
 - **Sensoren**: Zeigt aktuelle Zeit, Effekt, Helligkeit, IP-Adresse und Sensorwerte
 - **Präsenz-Status**: Zeigt den aktuellen Präsenzstatus an
+- **Geräte-Seite**: Vollständige Geräte-Seite mit Device Info und Diagnostics
+- **Diagnostics**: Detaillierte Diagnose-Informationen direkt in Home Assistant
 - **Automatisierungen**: Nutze alle Entities in HA-Automatisierungen
 - **mDNS Discovery**: Automatische Erkennung von Geräten im Netzwerk
 - **Parallel zu MQTT**: Funktioniert parallel zur bestehenden MQTT-Präsenz-Integration
@@ -47,7 +49,7 @@ Home Assistant Integration für die Ikea Obegraensad LED Matrix Uhr.
 
 ## Verwendung
 
-Nach der Installation werden folgende Entities in Home Assistant erstellt:
+Nach der Installation werden folgende Entities in Home Assistant erstellt und automatisch unter einem Device gruppiert:
 
 ### Entities
 
@@ -63,6 +65,17 @@ Nach der Installation werden folgende Entities in Home Assistant erstellt:
 - **Sensor: IP Address** - IP-Adresse des Geräts
 - **Binary Sensor: Presence** - Präsenzstatus
 - **Binary Sensor: Display Status** - Status des Displays
+
+### Geräte-Seite
+
+Jedes konfigurierte Gerät erhält eine vollständige Geräte-Seite in Home Assistant mit:
+
+- **Geräte-Info**: Name, Hersteller (IKEA), Modell (Obegraensad), Firmware-Version und Link zum Web-Interface
+- **Diagnose-Karte**: Vollständiger Status-JSON von `/api/status`, Config-Entry-Informationen und Coordinator-Status
+- **Alle Entities**: Alle Switches, Selects, Lights und Sensoren sind unter dem Device gruppiert
+- **Aktivitäts-Log**: Automatisch generiertes Log aller Entity-Änderungen
+
+Die Geräte-Seite kann über **Einstellungen → Geräte & Dienste → [Gerät]** aufgerufen werden.
 
 ### Service: Auto-Brightness konfigurieren
 

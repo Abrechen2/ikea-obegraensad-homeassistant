@@ -12,6 +12,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN, KEY_AUTO_BRIGHTNESS_ENABLED
 from .coordinator import IkeaObegraensadDataUpdateCoordinator
+from . import get_device_info
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -43,6 +44,7 @@ class IkeaObegraensadDisplaySwitch(CoordinatorEntity, SwitchEntity):
         self._attr_unique_id = f"{entry.entry_id}_display"
         self._attr_name = f"{entry.data.get('name', 'Ikea Clock')} Display"
         self._attr_icon = "mdi:led-on"
+        self._attr_device_info = get_device_info(entry, coordinator)
 
     @property
     def is_on(self) -> bool | None:
@@ -77,6 +79,7 @@ class IkeaObegraensadAutoBrightnessSwitch(CoordinatorEntity, SwitchEntity):
         self._attr_unique_id = f"{entry.entry_id}_auto_brightness"
         self._attr_name = f"{entry.data.get('name', 'Ikea Clock')} Auto Brightness"
         self._attr_icon = "mdi:brightness-auto"
+        self._attr_device_info = get_device_info(entry, coordinator)
 
     @property
     def is_on(self) -> bool | None:

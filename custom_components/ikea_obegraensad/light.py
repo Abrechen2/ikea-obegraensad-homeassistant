@@ -22,6 +22,7 @@ from .const import (
     BRIGHTNESS_MAX_HA,
 )
 from .coordinator import IkeaObegraensadDataUpdateCoordinator
+from . import get_device_info
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -53,6 +54,7 @@ class IkeaObegraensadLight(CoordinatorEntity, LightEntity):
         self._attr_unique_id = f"{entry.entry_id}_light"
         self._attr_name = f"{entry.data.get('name', 'Ikea Clock')} Brightness"
         self._attr_icon = "mdi:brightness-6"
+        self._attr_device_info = get_device_info(entry, coordinator)
 
     @property
     def is_on(self) -> bool | None:
