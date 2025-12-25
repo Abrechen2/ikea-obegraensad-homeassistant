@@ -16,7 +16,8 @@
       "unknown": "Ein unbekannter Fehler ist aufgetreten."
     },
     "abort": {
-      "already_configured": "Dieses Gerät ist bereits konfiguriert."
+      "already_configured": "Dieses Gerät ist bereits konfiguriert.",
+      "not_ikea_clock": "Das gefundene Gerät ist kein Ikea Obegraensad Gerät."
     }
   }
 }

@@ -9,7 +9,13 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 import aiohttp
 
-from .const import API_STATUS, DEFAULT_TIMEOUT, DEFAULT_SCAN_INTERVAL
+from .const import (
+    API_STATUS,
+    API_SET_BRIGHTNESS,
+    API_EFFECT,
+    DEFAULT_TIMEOUT,
+    DEFAULT_SCAN_INTERVAL,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -60,5 +66,40 @@ class IkeaObegraensadDataUpdateCoordinator(DataUpdateCoordinator):
                         return False
         except Exception as err:
             _LOGGER.error(f"Error setting display: {err}")
+            return False
+
+    async def async_set_brightness(self, brightness: int) -> bool:
+        """Set brightness (0-1023)."""
+        try:
+            async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=DEFAULT_TIMEOUT)) as session:
+                async with session.get(
+                    f"{self.base_url}{API_SET_BRIGHTNESS}",
+                    params={"b": str(brightness)}
+                ) as response:
+                    if response.status == 200:
+                        await self.async_request_refresh()
+                        return True
+                    else:
+                        _LOGGER.error(f"Failed to set brightness: HTTP {response.status}")
+                        return False
+        except Exception as err:
+            _LOGGER.error(f"Error setting brightness: {err}")
+            return False
+
+    async def async_set_effect(self, effect_name: str) -> bool:
+        """Set effect by name."""
+        try:
+            async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=DEFAULT_TIMEOUT)) as session:
+                async with session.get(
+                    f"{self.base_url}{API_EFFECT}/{effect_name}"
+                ) as response:
+                    if response.status == 200:
+                        await self.async_request_refresh()
+                        return True
+                    else:
+                        _LOGGER.error(f"Failed to set effect: HTTP {response.status}")
+                        return False
+        except Exception as err:
+            _LOGGER.error(f"Error setting effect: {err}")
             return False
 

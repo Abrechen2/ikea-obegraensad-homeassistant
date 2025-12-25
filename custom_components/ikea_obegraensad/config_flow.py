@@ -8,6 +8,7 @@ import aiohttp
 import voluptuous as vol
 
 from homeassistant import config_entries
+from homeassistant.components import zeroconf
 from homeassistant.const import CONF_HOST, CONF_PORT, CONF_NAME
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.exceptions import HomeAssistantError
@@ -72,6 +73,32 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         return self.async_show_form(
             step_id="user", data_schema=STEP_USER_DATA_SCHEMA, errors=errors
+        )
+
+    async def async_step_zeroconf(
+        self, discovery_info: zeroconf.ZeroconfServiceInfo
+    ) -> FlowResult:
+        """Handle zeroconf discovery."""
+        host = discovery_info.host
+        port = discovery_info.port or DEFAULT_PORT
+        hostname = discovery_info.hostname.lower()
+
+        # Check if hostname contains "ikea" or "clock" to identify the device
+        if "ikea" not in hostname and "clock" not in hostname:
+            return self.async_abort(reason="not_ikea_clock")
+
+        # Check if already configured
+        await self.async_set_unique_id(f"{host}:{port}")
+        self._abort_if_unique_id_configured()
+
+        # Pre-fill the form with discovered data
+        self.context.update({"title_placeholders": {"name": "Ikea Clock"}})
+        return await self.async_step_user(
+            {
+                CONF_HOST: host,
+                CONF_PORT: port,
+                CONF_NAME: "Ikea Clock",
+            }
         )
 
 
