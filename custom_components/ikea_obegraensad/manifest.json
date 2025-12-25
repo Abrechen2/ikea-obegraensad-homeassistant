@@ -1,0 +1,13 @@
+{
+  "domain": "ikea_obegraensad",
+  "name": "Ikea Obegraensad",
+  "version": "1.0.0",
+  "documentation": "https://github.com/Abrechen2/ikea-obegraensad-homeassistant",
+  "issue_tracker": "https://github.com/Abrechen2/ikea-obegraensad-homeassistant/issues",
+  "codeowners": ["@Abrechen2"],
+  "requirements": ["aiohttp>=3.8.0"],
+  "config_flow": true,
+  "dependencies": [],
+  "iot_class": "Local Polling"
+}
+

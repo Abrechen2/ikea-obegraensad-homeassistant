@@ -1,0 +1,8 @@
+{
+  "name": "Ikea Obegraensad",
+  "domains": ["switch"],
+  "homeassistant": "2023.1.0",
+  "iot_class": "Local Polling",
+  "render_readme": true
+}
+

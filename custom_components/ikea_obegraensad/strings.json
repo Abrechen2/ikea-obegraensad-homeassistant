@@ -1,0 +1,23 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Ikea Obegraensad einrichten",
+        "description": "Bitte gib die IP-Adresse oder den Hostnamen deines Geräts ein.",
+        "data": {
+          "host": "Host / IP-Adresse",
+          "port": "Port",
+          "name": "Name"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Konnte nicht mit dem Gerät verbinden. Bitte prüfe die IP-Adresse und ob das Gerät eingeschaltet ist.",
+      "unknown": "Ein unbekannter Fehler ist aufgetreten."
+    },
+    "abort": {
+      "already_configured": "Dieses Gerät ist bereits konfiguriert."
+    }
+  }
+}
+
