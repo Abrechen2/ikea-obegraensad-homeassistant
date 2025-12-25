@@ -86,7 +86,24 @@ class IkeaObegraensadAutoBrightnessSwitch(CoordinatorEntity, SwitchEntity):
         """Return true if auto-brightness is enabled."""
         if self.coordinator.data is None:
             return None
-        return self.coordinator.data.get(KEY_AUTO_BRIGHTNESS_ENABLED, False)
+        # Try multiple possible field names
+        data = self.coordinator.data
+        enabled = (
+            data.get(KEY_AUTO_BRIGHTNESS_ENABLED) or
+            data.get("autoBrightness") or
+            data.get("autoBrightnessOn") or
+            data.get("auto_brightness_enabled")
+        )
+        # Handle boolean, string, or int values
+        if enabled is None:
+            return False
+        if isinstance(enabled, bool):
+            return enabled
+        if isinstance(enabled, str):
+            return enabled.lower() in ("true", "1", "on", "enabled")
+        if isinstance(enabled, (int, float)):
+            return bool(enabled)
+        return False
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn on auto-brightness."""

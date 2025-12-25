@@ -58,10 +58,11 @@ class IkeaObegraensadLight(CoordinatorEntity, LightEntity):
 
     @property
     def is_on(self) -> bool | None:
-        """Return true if the light is on."""
+        """Return true if brightness is greater than 0."""
         if self.coordinator.data is None:
             return None
-        return self.coordinator.data.get(KEY_DISPLAY_ENABLED, False)
+        brightness = self.brightness
+        return brightness is not None and brightness > 0
 
     @property
     def brightness(self) -> int | None:
@@ -75,7 +76,7 @@ class IkeaObegraensadLight(CoordinatorEntity, LightEntity):
         return int((api_brightness / BRIGHTNESS_MAX_API) * BRIGHTNESS_MAX_HA)
 
     async def async_turn_on(self, **kwargs: Any) -> None:
-        """Turn on the light."""
+        """Set brightness (only brightness, does not control display)."""
         brightness = kwargs.get(ATTR_BRIGHTNESS)
         
         # If brightness is provided, set it
@@ -85,16 +86,16 @@ class IkeaObegraensadLight(CoordinatorEntity, LightEntity):
             success = await self.coordinator.async_set_brightness(api_brightness)
             if not success:
                 _LOGGER.error("Failed to set brightness")
-        
-        # Turn on display if not already on
-        if not self.is_on:
-            success = await self.coordinator.async_set_display(True)
+        else:
+            # If no brightness specified, set to a default value (e.g., 50%)
+            default_brightness = int((128 / BRIGHTNESS_MAX_HA) * BRIGHTNESS_MAX_API)
+            success = await self.coordinator.async_set_brightness(default_brightness)
             if not success:
-                _LOGGER.error("Failed to turn on display")
+                _LOGGER.error("Failed to set brightness")
 
     async def async_turn_off(self, **kwargs: Any) -> None:
-        """Turn off the light."""
-        success = await self.coordinator.async_set_display(False)
+        """Set brightness to 0 (display remains on)."""
+        success = await self.coordinator.async_set_brightness(0)
         if not success:
-            _LOGGER.error("Failed to turn off display")
+            _LOGGER.error("Failed to set brightness to 0")
 

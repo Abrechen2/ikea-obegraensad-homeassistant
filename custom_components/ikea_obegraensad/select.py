@@ -52,7 +52,27 @@ class IkeaObegraensadEffectSelect(CoordinatorEntity, SelectEntity):
         """Return the current selected option."""
         if self.coordinator.data is None:
             return None
-        return self.coordinator.data.get(KEY_CURRENT_EFFECT)
+        # Try multiple possible field names
+        data = self.coordinator.data
+        effect = (
+            data.get(KEY_CURRENT_EFFECT) or
+            data.get("effect") or
+            data.get("activeEffect") or
+            data.get("current_effect") or
+            data.get("active_effect")
+        )
+        # If effect is found and is in the options list, return it
+        if effect and isinstance(effect, str) and effect in self._attr_options:
+            return effect
+        # Log for debugging if effect not found or not in options
+        if effect and _LOGGER.isEnabledFor(logging.DEBUG):
+            _LOGGER.debug(
+                "Effect '%s' not found in options. Available effects: %s. Available data keys: %s",
+                effect,
+                self._attr_options,
+                list(data.keys())
+            )
+        return None
 
     async def async_select_option(self, option: str) -> None:
         """Change the selected option."""

@@ -25,14 +25,26 @@ def get_device_info(entry: ConfigEntry, coordinator: IkeaObegraensadDataUpdateCo
     port = entry.data.get("port", DEFAULT_PORT)
     
     # Try to get firmware version from coordinator data
+    # Check multiple possible field names
     sw_version = "Unknown"
     if coordinator.data:
-        sw_version = coordinator.data.get("firmwareVersion", coordinator.data.get("version", "Unknown"))
+        # Try various possible field names for firmware version
+        sw_version = (
+            coordinator.data.get("firmwareVersion") or
+            coordinator.data.get("firmware") or
+            coordinator.data.get("version") or
+            coordinator.data.get("sw_version") or
+            coordinator.data.get("fw_version") or
+            "Unknown"
+        )
+        # Log available keys for debugging if firmware not found
+        if sw_version == "Unknown" and _LOGGER.isEnabledFor(logging.DEBUG):
+            _LOGGER.debug("Firmware not found in API response. Available keys: %s", list(coordinator.data.keys()))
     
     return {
         "identifiers": {(DOMAIN, entry.entry_id)},
         "name": entry.data.get("name", "Ikea Clock"),
-        "manufacturer": "IKEA",
+        "manufacturer": "Abrechen2",
         "model": "Obegraensad",
         "sw_version": sw_version,
         "configuration_url": f"http://{host}:{port}",

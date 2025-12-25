@@ -92,5 +92,19 @@ class IkeaObegraensadSensor(CoordinatorEntity, SensorEntity):
         """Return the native value of the sensor."""
         if self.coordinator.data is None:
             return None
+        
+        # Special handling for current effect sensor
+        if self.entity_description.key == KEY_CURRENT_EFFECT:
+            data = self.coordinator.data
+            # Try multiple possible field names
+            effect = (
+                data.get(KEY_CURRENT_EFFECT) or
+                data.get("effect") or
+                data.get("activeEffect") or
+                data.get("current_effect") or
+                data.get("active_effect")
+            )
+            return effect if effect else None
+        
         return self.coordinator.data.get(self.entity_description.key)
 
