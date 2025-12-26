@@ -1,6 +1,8 @@
 """Config flow for Ikea Obegraensad integration."""
 from __future__ import annotations
 
+import asyncio
+import json
 import logging
 from typing import Any
 
@@ -31,16 +33,41 @@ async def validate_input(data: dict[str, Any]) -> dict[str, Any]:
     """Validate the user input allows us to connect."""
     host = data[CONF_HOST]
     port = data.get(CONF_PORT, DEFAULT_PORT)
+    url = f"http://{host}:{port}{API_STATUS}"
     
-    async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=DEFAULT_TIMEOUT)) as session:
-        try:
-            async with session.get(f"http://{host}:{port}{API_STATUS}") as response:
+    _LOGGER.debug("Validating connection to %s", url)
+    
+    try:
+        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=DEFAULT_TIMEOUT)) as session:
+            async with session.get(url) as response:
+                _LOGGER.debug("Response status: %s, Content-Type: %s", response.status, response.content_type)
+                
                 if response.status != 200:
+                    _LOGGER.warning("HTTP error %s from %s", response.status, url)
                     raise CannotConnect
-                result = await response.json()
+                
+                text = await response.text()
+                _LOGGER.debug("Response text length: %d characters", len(text))
+                
+                if not text:
+                    _LOGGER.error("Empty response from %s", url)
+                    raise CannotConnect
+                
+                try:
+                    result = json.loads(text)
+                except json.JSONDecodeError as err:
+                    _LOGGER.error("Invalid JSON response from %s: %s. Response: %s", url, err, text[:200])
+                    raise CannotConnect from err
+                
+                _LOGGER.debug("Successfully validated connection to %s", url)
                 return {"title": data.get(CONF_NAME, "Ikea Clock"), "device_info": result}
-        except aiohttp.ClientError as err:
-            raise CannotConnect from err
+                
+    except asyncio.TimeoutError as err:
+        _LOGGER.error("Timeout connecting to %s", url)
+        raise CannotConnect from err
+    except aiohttp.ClientError as err:
+        _LOGGER.error("Client error connecting to %s: %s", url, err)
+        raise CannotConnect from err
 
 
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):

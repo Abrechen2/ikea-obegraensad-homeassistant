@@ -1,6 +1,7 @@
 """DataUpdateCoordinator for Ikea Obegraensad."""
 from __future__ import annotations
 
+import json
 import logging
 from datetime import timedelta
 from typing import Any
@@ -43,7 +44,8 @@ class IkeaObegraensadDataUpdateCoordinator(DataUpdateCoordinator):
             async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=DEFAULT_TIMEOUT)) as session:
                 async with session.get(f"{self.base_url}{API_STATUS}") as response:
                     if response.status == 200:
-                        data = await response.json()
+                        text = await response.text()
+                        data = json.loads(text)
                         return data
                     else:
                         raise UpdateFailed(f"HTTP {response.status}: {response.reason}")

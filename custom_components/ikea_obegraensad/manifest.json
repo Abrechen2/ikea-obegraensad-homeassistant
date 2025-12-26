@@ -1,7 +1,7 @@
 {
   "domain": "ikea_obegraensad",
   "name": "Ikea Obegraensad",
-  "version": "1.2.1",
+  "version": "1.2.5",
   "documentation": "https://github.com/Abrechen2/ikea-obegraensad-homeassistant",
   "issue_tracker": "https://github.com/Abrechen2/ikea-obegraensad-homeassistant/issues",
   "codeowners": ["@Abrechen2"],
