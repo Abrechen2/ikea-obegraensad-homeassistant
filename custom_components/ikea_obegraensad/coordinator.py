@@ -23,6 +23,40 @@ from .const import (
 _LOGGER = logging.getLogger(__name__)
 
 
+async def decode_response_text(response: aiohttp.ClientResponse) -> str:
+    """Decode response text with robust encoding handling.
+    
+    Tries multiple encodings to handle devices that may not send UTF-8.
+    """
+    # Read bytes first
+    try:
+        content_bytes = await response.read()
+    except Exception as err:
+        _LOGGER.debug("Error reading response bytes: %s, trying text() with error handling", err)
+        # Fallback to text() with error handling
+        try:
+            return await response.text(encoding='utf-8', errors='replace')
+        except Exception:
+            # Last resort: try latin-1 (can decode any byte)
+            return await response.text(encoding='latin-1')
+    
+    # Try different encodings
+    encodings = ['utf-8', 'latin-1', 'cp1252', 'iso-8859-1']
+    
+    for encoding in encodings:
+        try:
+            text = content_bytes.decode(encoding)
+            if encoding != 'utf-8':
+                _LOGGER.debug("Decoded response using %s encoding", encoding)
+            return text
+        except UnicodeDecodeError:
+            continue
+    
+    # If all encodings fail, use replace to handle invalid bytes
+    _LOGGER.warning("Could not decode response with standard encodings, using utf-8 with error replacement")
+    return content_bytes.decode('utf-8', errors='replace')
+
+
 class IkeaObegraensadDataUpdateCoordinator(DataUpdateCoordinator):
     """Class to manage fetching data from the Ikea Obegraensad device."""
 
@@ -44,7 +78,7 @@ class IkeaObegraensadDataUpdateCoordinator(DataUpdateCoordinator):
             async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=DEFAULT_TIMEOUT)) as session:
                 async with session.get(f"{self.base_url}{API_STATUS}") as response:
                     if response.status == 200:
-                        text = await response.text()
+                        text = await decode_response_text(response)
                         data = json.loads(text)
                         return data
                     else:

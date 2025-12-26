@@ -1,0 +1,4 @@
+# Services for Ikea Obegraensad integration
+# Services are registered programmatically in __init__.py
+# This file exists to prevent Home Assistant from showing a warning
+
