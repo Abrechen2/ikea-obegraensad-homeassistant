@@ -15,6 +15,8 @@ API_SET_BRIGHTNESS: Final = "/api/setBrightness"
 API_SET_AUTO_BRIGHTNESS: Final = "/api/setAutoBrightness"
 API_SET_TIMEZONE: Final = "/api/setTimezone"
 API_EFFECT: Final = "/effect"
+API_SET_SENSOR_DATA:  Final = "/api/setSensorData"
+API_SET_SLIDE_CONFIG: Final = "/api/setSlideConfig"
 
 # Effect names
 EFFECTS: Final = [
@@ -31,6 +33,7 @@ EFFECTS: Final = [
     "plasma",
     "ripple",
     "sandclock",
+    "sensorclock",
 ]
 
 # Status data keys
@@ -52,6 +55,11 @@ KEY_TIMEZONE: Final = "timezone"
 CONF_HOST: Final = "host"
 CONF_PORT: Final = "port"
 CONF_NAME: Final = "name"
+CONF_TEMP_ENTITY: Final = "temp_entity"
+CONF_HUMI_ENTITY: Final = "humi_entity"
+CONF_CLOCK_DUR:   Final = "clock_duration"
+CONF_TEMP_DUR:    Final = "temp_duration"
+CONF_HUMI_DUR:    Final = "humi_duration"
 
 # Brightness conversion
 BRIGHTNESS_MAX_API: Final = 1023
