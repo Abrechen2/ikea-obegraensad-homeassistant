@@ -245,32 +245,35 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         if user_input is not None:
             return self.async_create_entry(title="", data=user_input)
 
-        current = self.config_entry.options or self.config_entry.data
-        schema = vol.Schema(
-            {
-                vol.Optional(
-                    CONF_TEMP_ENTITY,
-                    default=current.get(CONF_TEMP_ENTITY, ""),
-                ): EntitySelector(EntitySelectorConfig(domain="sensor")),
-                vol.Optional(
-                    CONF_HUMI_ENTITY,
-                    default=current.get(CONF_HUMI_ENTITY, ""),
-                ): EntitySelector(EntitySelectorConfig(domain="sensor")),
-                vol.Optional(
-                    CONF_CLOCK_DUR,
-                    default=int(current.get(CONF_CLOCK_DUR, 10)),
-                ): NumberSelector(NumberSelectorConfig(min=1, max=3600, step=1, mode=NumberSelectorMode.BOX)),
-                vol.Optional(
-                    CONF_TEMP_DUR,
-                    default=int(current.get(CONF_TEMP_DUR, 5)),
-                ): NumberSelector(NumberSelectorConfig(min=1, max=3600, step=1, mode=NumberSelectorMode.BOX)),
-                vol.Optional(
-                    CONF_HUMI_DUR,
-                    default=int(current.get(CONF_HUMI_DUR, 5)),
-                ): NumberSelector(NumberSelectorConfig(min=1, max=3600, step=1, mode=NumberSelectorMode.BOX)),
-            }
+        current = {**self.config_entry.data, **self.config_entry.options}
+
+        # Build schema dynamically so EntitySelector fields have no default
+        # when no entity is configured yet (empty string is invalid for EntitySelector)
+        temp_entity = current.get(CONF_TEMP_ENTITY) or None
+        humi_entity = current.get(CONF_HUMI_ENTITY) or None
+
+        schema_dict = {}
+        if temp_entity:
+            schema_dict[vol.Optional(CONF_TEMP_ENTITY, default=temp_entity)] = EntitySelector(EntitySelectorConfig(domain="sensor"))
+        else:
+            schema_dict[vol.Optional(CONF_TEMP_ENTITY)] = EntitySelector(EntitySelectorConfig(domain="sensor"))
+
+        if humi_entity:
+            schema_dict[vol.Optional(CONF_HUMI_ENTITY, default=humi_entity)] = EntitySelector(EntitySelectorConfig(domain="sensor"))
+        else:
+            schema_dict[vol.Optional(CONF_HUMI_ENTITY)] = EntitySelector(EntitySelectorConfig(domain="sensor"))
+
+        schema_dict[vol.Optional(CONF_CLOCK_DUR, default=int(current.get(CONF_CLOCK_DUR, 10)))] = NumberSelector(
+            NumberSelectorConfig(min=1, max=3600, step=1, mode=NumberSelectorMode.BOX)
         )
-        return self.async_show_form(step_id="init", data_schema=schema)
+        schema_dict[vol.Optional(CONF_TEMP_DUR, default=int(current.get(CONF_TEMP_DUR, 5)))] = NumberSelector(
+            NumberSelectorConfig(min=1, max=3600, step=1, mode=NumberSelectorMode.BOX)
+        )
+        schema_dict[vol.Optional(CONF_HUMI_DUR, default=int(current.get(CONF_HUMI_DUR, 5)))] = NumberSelector(
+            NumberSelectorConfig(min=1, max=3600, step=1, mode=NumberSelectorMode.BOX)
+        )
+
+        return self.async_show_form(step_id="init", data_schema=vol.Schema(schema_dict))
 
 
 class CannotConnect(HomeAssistantError):
