@@ -15,15 +15,26 @@ from homeassistant.const import CONF_HOST, CONF_PORT, CONF_NAME
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.exceptions import HomeAssistantError
 import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers.selector import (
+    EntitySelector,
+    EntitySelectorConfig,
+    NumberSelector,
+    NumberSelectorConfig,
+    NumberSelectorMode,
+)
 
-from .const import DOMAIN, DEFAULT_PORT, DEFAULT_TIMEOUT, API_STATUS
+from .const import (
+    DOMAIN, DEFAULT_PORT, DEFAULT_TIMEOUT, API_STATUS,
+    CONF_TEMP_ENTITY, CONF_HUMI_ENTITY,
+    CONF_CLOCK_DUR, CONF_TEMP_DUR, CONF_HUMI_DUR,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
 
 async def decode_response_text(response: aiohttp.ClientResponse) -> str:
     """Decode response text with robust encoding handling (async version).
-    
+
     Tries multiple encodings to handle devices that may not send UTF-8.
     """
     # Read bytes first
@@ -37,10 +48,10 @@ async def decode_response_text(response: aiohttp.ClientResponse) -> str:
         except Exception:
             # Last resort: try latin-1 (can decode any byte)
             return await response.text(encoding='latin-1')
-    
+
     # Try different encodings
     encodings = ['utf-8', 'latin-1', 'cp1252', 'iso-8859-1']
-    
+
     for encoding in encodings:
         try:
             text = content_bytes.decode(encoding)
@@ -49,7 +60,7 @@ async def decode_response_text(response: aiohttp.ClientResponse) -> str:
             return text
         except UnicodeDecodeError:
             continue
-    
+
     # If all encodings fail, use replace to handle invalid bytes
     _LOGGER.warning("Could not decode response with standard encodings, using utf-8 with error replacement")
     return content_bytes.decode('utf-8', errors='replace')
@@ -63,44 +74,64 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
     }
 )
 
+STEP_SENSOR_SCHEMA = vol.Schema(
+    {
+        vol.Optional(CONF_TEMP_ENTITY): EntitySelector(
+            EntitySelectorConfig(domain="sensor")
+        ),
+        vol.Optional(CONF_HUMI_ENTITY): EntitySelector(
+            EntitySelectorConfig(domain="sensor")
+        ),
+        vol.Optional(CONF_CLOCK_DUR, default=10): NumberSelector(
+            NumberSelectorConfig(min=1, max=3600, step=1, mode=NumberSelectorMode.BOX)
+        ),
+        vol.Optional(CONF_TEMP_DUR, default=5): NumberSelector(
+            NumberSelectorConfig(min=1, max=3600, step=1, mode=NumberSelectorMode.BOX)
+        ),
+        vol.Optional(CONF_HUMI_DUR, default=5): NumberSelector(
+            NumberSelectorConfig(min=1, max=3600, step=1, mode=NumberSelectorMode.BOX)
+        ),
+    }
+)
+
 
 async def validate_input(data: dict[str, Any]) -> dict[str, Any]:
     """Validate the user input allows us to connect."""
     host = data[CONF_HOST]
     port = data.get(CONF_PORT, DEFAULT_PORT)
     url = f"http://{host}:{port}{API_STATUS}"
-    
+
     _LOGGER.debug("Validating connection to %s", url)
-    
+
     try:
         async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=DEFAULT_TIMEOUT)) as session:
             async with session.get(url) as response:
                 _LOGGER.debug("Response status: %s, Content-Type: %s", response.status, response.content_type)
-                
+
                 if response.status != 200:
                     _LOGGER.warning("HTTP error %s from %s (reason: %s)", response.status, url, response.reason)
                     raise CannotConnect(f"HTTP {response.status}: {response.reason}")
-                
+
                 text = await decode_response_text(response)
                 _LOGGER.debug("Response text length: %d characters", len(text))
-                
+
                 if not text:
                     _LOGGER.error("Empty response from %s", url)
                     raise CannotConnect("Empty response from device")
-                
+
                 try:
                     result = json.loads(text)
                 except json.JSONDecodeError as err:
                     _LOGGER.error("Invalid JSON response from %s: %s. Response: %s", url, err, text[:200])
                     raise CannotConnect from err
-                
+
                 # Log full API response for debugging (first 500 characters)
                 _LOGGER.debug("API response from %s (first 500 chars): %s", url, text[:500])
                 _LOGGER.debug("Parsed JSON keys: %s", list(result.keys()) if isinstance(result, dict) else "Not a dict")
-                
+
                 _LOGGER.debug("Successfully validated connection to %s", url)
                 return {"title": data.get(CONF_NAME, "Ikea Clock"), "device_info": result}
-                
+
     except asyncio.TimeoutError as err:
         _LOGGER.error("Timeout connecting to %s (timeout: %s seconds)", url, DEFAULT_TIMEOUT)
         raise CannotConnect(f"Connection timeout after {DEFAULT_TIMEOUT} seconds") from err
@@ -112,7 +143,10 @@ async def validate_input(data: dict[str, Any]) -> dict[str, Any]:
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Ikea Obegraensad."""
 
-    VERSION = 1
+    VERSION = 2
+
+    def __init__(self):
+        self._user_data: dict[str, Any] = {}
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
@@ -138,19 +172,34 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             unique_id = f"{user_input[CONF_HOST]}:{user_input.get(CONF_PORT, DEFAULT_PORT)}"
             _LOGGER.info("Validation successful. Setting unique_id: %s", unique_id)
             await self.async_set_unique_id(unique_id)
-            
-            # Check if unique ID is already configured
-            # _abort_if_unique_id_configured() will raise AbortFlow if already configured
-            # This will automatically abort the flow, so we don't need to catch it
             self._abort_if_unique_id_configured()
             _LOGGER.debug("Unique ID %s is not yet configured, proceeding with entry creation", unique_id)
-            
+
             _LOGGER.info("Creating config entry for device at %s:%s with title: %s", user_input[CONF_HOST], user_input.get(CONF_PORT, DEFAULT_PORT), info["title"])
-            return self.async_create_entry(title=info["title"], data=user_input)
+            # Store host/port/name and proceed to sensor config step
+            self._user_data = user_input
+            return await self.async_step_sensor()
 
         return self.async_show_form(
             step_id="user", data_schema=STEP_USER_DATA_SCHEMA, errors=errors
         )
+
+    async def async_step_sensor(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """Handle optional sensor entity configuration step."""
+        if user_input is None:
+            return self.async_show_form(
+                step_id="sensor", data_schema=STEP_SENSOR_SCHEMA
+            )
+
+        # Merge sensor config into user data and create entry
+        combined = {**self._user_data, **user_input}
+        return self.async_create_entry(title=self._user_data.get(CONF_NAME, "Ikea Clock"), data=combined)
+
+    @staticmethod
+    def async_get_options_flow(config_entry):
+        return OptionsFlowHandler(config_entry)
 
     async def async_step_zeroconf(
         self, discovery_info: zeroconf.ZeroconfServiceInfo
@@ -169,10 +218,6 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         unique_id = f"{host}:{port}"
         _LOGGER.info("Zeroconf discovery: Found device at %s:%s (hostname: %s). Setting unique_id: %s", host, port, hostname, unique_id)
         await self.async_set_unique_id(unique_id)
-        
-        # Check if unique ID is already configured
-        # _abort_if_unique_id_configured() will raise AbortFlow if already configured
-        # This will automatically abort the flow, so we don't need to catch it
         self._abort_if_unique_id_configured()
         _LOGGER.debug("Zeroconf: Unique ID %s is not yet configured, proceeding", unique_id)
 
@@ -187,6 +232,46 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         )
 
 
+class OptionsFlowHandler(config_entries.OptionsFlow):
+    """Handle options for SensorClock sensor entity and duration configuration."""
+
+    def __init__(self, config_entry) -> None:
+        self.config_entry = config_entry
+
+    async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """Show options form pre-filled with current values."""
+        if user_input is not None:
+            return self.async_create_entry(title="", data=user_input)
+
+        current = self.config_entry.options or self.config_entry.data
+        schema = vol.Schema(
+            {
+                vol.Optional(
+                    CONF_TEMP_ENTITY,
+                    default=current.get(CONF_TEMP_ENTITY, ""),
+                ): EntitySelector(EntitySelectorConfig(domain="sensor")),
+                vol.Optional(
+                    CONF_HUMI_ENTITY,
+                    default=current.get(CONF_HUMI_ENTITY, ""),
+                ): EntitySelector(EntitySelectorConfig(domain="sensor")),
+                vol.Optional(
+                    CONF_CLOCK_DUR,
+                    default=int(current.get(CONF_CLOCK_DUR, 10)),
+                ): NumberSelector(NumberSelectorConfig(min=1, max=3600, step=1, mode=NumberSelectorMode.BOX)),
+                vol.Optional(
+                    CONF_TEMP_DUR,
+                    default=int(current.get(CONF_TEMP_DUR, 5)),
+                ): NumberSelector(NumberSelectorConfig(min=1, max=3600, step=1, mode=NumberSelectorMode.BOX)),
+                vol.Optional(
+                    CONF_HUMI_DUR,
+                    default=int(current.get(CONF_HUMI_DUR, 5)),
+                ): NumberSelector(NumberSelectorConfig(min=1, max=3600, step=1, mode=NumberSelectorMode.BOX)),
+            }
+        )
+        return self.async_show_form(step_id="init", data_schema=schema)
+
+
 class CannotConnect(HomeAssistantError):
     """Error to indicate we cannot connect."""
-
