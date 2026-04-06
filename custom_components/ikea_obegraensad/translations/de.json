@@ -34,11 +34,14 @@
   "options": {
     "step": {
       "init": {
-        "title": "SensorClock Optionen",
-        "description": "Sensor-Entitäten und Anzeigedauern anpassen.",
+        "title": "Einstellungen",
+        "description": "Gerät konfigurieren und SensorClock einrichten.",
         "data": {
-          "temp_entity": "Temperatur-Sensor",
-          "humi_entity": "Feuchte-Sensor",
+          "display_enabled": "Display einschalten",
+          "auto_brightness": "Automatische Helligkeit",
+          "timezone": "Zeitzone",
+          "temp_entity": "Temperatur-Sensor (SensorClock)",
+          "humi_entity": "Feuchte-Sensor (SensorClock)",
           "clock_duration": "Uhrzeit-Dauer (Sek.)",
           "temp_duration": "Temperatur-Dauer (Sek.)",
           "humi_duration": "Feuchte-Dauer (Sek.)"

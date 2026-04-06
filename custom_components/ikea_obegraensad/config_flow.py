@@ -17,17 +17,23 @@ from homeassistant.data_entry_flow import FlowResult
 from homeassistant.exceptions import HomeAssistantError
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.selector import (
+    BooleanSelector,
     EntitySelector,
     EntitySelectorConfig,
     NumberSelector,
     NumberSelectorConfig,
     NumberSelectorMode,
+    SelectSelector,
+    SelectSelectorConfig,
+    SelectSelectorMode,
 )
 
 from .const import (
     DOMAIN, DEFAULT_PORT, DEFAULT_TIMEOUT, API_STATUS,
     CONF_TEMP_ENTITY, CONF_HUMI_ENTITY,
     CONF_CLOCK_DUR, CONF_TEMP_DUR, CONF_HUMI_DUR,
+    CONF_DISPLAY_ENABLED, CONF_AUTO_BRIGHTNESS, CONF_TIMEZONE_OPT,
+    TIMEZONES, KEY_DISPLAY_ENABLED, KEY_AUTO_BRIGHTNESS_ENABLED, KEY_TIMEZONE,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -235,7 +241,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
 
 class OptionsFlowHandler(config_entries.OptionsFlow):
-    """Handle options for SensorClock sensor entity and duration configuration."""
+    """Handle options for device settings and SensorClock configuration."""
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
@@ -246,8 +252,19 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
 
         current = {**self.config_entry.data, **self.config_entry.options}
 
+        # Get live device state for display/brightness/timezone defaults
+        coordinator = self.hass.data.get(DOMAIN, {}).get(self.config_entry.entry_id)
+        device_data = coordinator.data if coordinator and coordinator.data else {}
+
         schema = vol.Schema(
             {
+                # Device settings
+                vol.Optional(CONF_DISPLAY_ENABLED): BooleanSelector(),
+                vol.Optional(CONF_AUTO_BRIGHTNESS): BooleanSelector(),
+                vol.Optional(CONF_TIMEZONE_OPT): SelectSelector(
+                    SelectSelectorConfig(options=TIMEZONES, mode=SelectSelectorMode.DROPDOWN)
+                ),
+                # SensorClock
                 vol.Optional(CONF_TEMP_ENTITY): EntitySelector(EntitySelectorConfig(domain="sensor")),
                 vol.Optional(CONF_HUMI_ENTITY): EntitySelector(EntitySelectorConfig(domain="sensor")),
                 vol.Optional(CONF_CLOCK_DUR): NumberSelector(NumberSelectorConfig(min=1, max=3600, step=1, mode=NumberSelectorMode.BOX)),
@@ -257,6 +274,9 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         )
 
         suggested = {
+            CONF_DISPLAY_ENABLED: current.get(CONF_DISPLAY_ENABLED, device_data.get(KEY_DISPLAY_ENABLED, True)),
+            CONF_AUTO_BRIGHTNESS: current.get(CONF_AUTO_BRIGHTNESS, device_data.get(KEY_AUTO_BRIGHTNESS_ENABLED, False)),
+            CONF_TIMEZONE_OPT: current.get(CONF_TIMEZONE_OPT, device_data.get(KEY_TIMEZONE, "Europe/Berlin")),
             CONF_CLOCK_DUR: int(current.get(CONF_CLOCK_DUR, 10)),
             CONF_TEMP_DUR: int(current.get(CONF_TEMP_DUR, 5)),
             CONF_HUMI_DUR: int(current.get(CONF_HUMI_DUR, 5)),

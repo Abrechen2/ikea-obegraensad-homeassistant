@@ -60,6 +60,9 @@ CONF_HUMI_ENTITY: Final = "humi_entity"
 CONF_CLOCK_DUR:   Final = "clock_duration"
 CONF_TEMP_DUR:    Final = "temp_duration"
 CONF_HUMI_DUR:    Final = "humi_duration"
+CONF_DISPLAY_ENABLED: Final = "display_enabled"
+CONF_AUTO_BRIGHTNESS: Final = "auto_brightness"
+CONF_TIMEZONE_OPT:    Final = "timezone"
 
 # Brightness conversion
 BRIGHTNESS_MAX_API: Final = 1023
