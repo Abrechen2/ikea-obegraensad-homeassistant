@@ -243,6 +243,23 @@ class IkeaObegraensadDataUpdateCoordinator(DataUpdateCoordinator):
         )
         _LOGGER.debug("SensorClock: listening to %s", entity_ids)
 
+        # Push current sensor values immediately — don't wait for next state change
+        for entity_id in entity_ids:
+            state = hass.states.get(entity_id)
+            if state and state.state not in ("unavailable", "unknown", ""):
+                try:
+                    value = float(state.state)
+                    if entity_id == self._temp_entity:
+                        self._last_temp = value
+                    elif entity_id == self._humi_entity:
+                        self._last_humi = value
+                except (ValueError, TypeError):
+                    _LOGGER.warning("SensorClock: initial state of %s is not a float: %s", entity_id, state.state)
+
+        if self._last_temp is not None and self._last_humi is not None:
+            _LOGGER.debug("SensorClock: pushing initial values temp=%.1f humi=%.1f", self._last_temp, self._last_humi)
+            await self.async_push_sensor_data(self._last_temp, self._last_humi)
+
     async def _on_sensor_state_change(self, event: Event) -> None:
         """Handle state changes from temperature or humidity entities."""
         entity_id = event.data.get("entity_id")
