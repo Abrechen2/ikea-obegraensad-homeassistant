@@ -65,16 +65,35 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     port = entry.data.get(CONF_PORT, DEFAULT_PORT)
     
     coordinator = IkeaObegraensadDataUpdateCoordinator(hass, host, port)
-    
+
     try:
         await coordinator.async_config_entry_first_refresh()
     except Exception as err:
         raise ConfigEntryNotReady(f"Error connecting to device: {err}") from err
-    
+
+    # Set up SensorClock sensor listeners using merged data + options
+    sensor_config = {**entry.data, **entry.options}
+    await coordinator.async_setup_sensor_listeners(hass, sensor_config)
+
+    def _unsub_sensor_listener():
+        if coordinator._unsub_state_listener is not None:
+            coordinator._unsub_state_listener()
+    entry.async_on_unload(_unsub_sensor_listener)
+
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN][entry.entry_id] = coordinator
-    
+
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+
+    async def async_options_updated(hass, entry) -> None:
+        """Re-wire sensor listeners when options are changed."""
+        coord = hass.data[DOMAIN].get(entry.entry_id)
+        if coord is None:
+            return
+        sensor_config = {**entry.data, **entry.options}
+        await coord.async_setup_sensor_listeners(hass, sensor_config)
+
+    entry.async_on_unload(entry.add_update_listener(async_options_updated))
     
     # Register service for auto-brightness configuration
     if not hass.services.has_service(DOMAIN, "configure_auto_brightness"):
@@ -172,4 +191,14 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass.services.async_remove(DOMAIN, "configure_auto_brightness")
     
     return unload_ok
+
+
+async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
+    """Migrate config entry from v1 to v2 (adds sensor fields with defaults)."""
+    _LOGGER.debug("Migrating config entry from version %s", config_entry.version)
+    if config_entry.version == 1:
+        # v1→v2: no data changes needed; sensor fields absent means disabled
+        hass.config_entries.async_update_entry(config_entry, version=2)
+        _LOGGER.info("Config entry migrated to version 2")
+    return True
 
