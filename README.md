@@ -1,114 +1,118 @@
-# Home Assistant Integration für Ikea Obegraensad
+# Home Assistant Integration for IKEA OBEGRÄNSAD
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/custom-components/hacs)
 
-Home Assistant Integration für die Ikea Obegraensad LED Matrix Uhr.
+Home Assistant integration for the IKEA OBEGRÄNSAD LED matrix clock running the [IkeaObegraensad firmware](https://github.com/Abrechen2/IkeaObegraensad).
+
+Communicates with the device over plain HTTP (local polling) and auto-discovers it via mDNS — no MQTT required.
 
 ## Features
 
-- **Display Ein/Aus**: Steuere das Display über Home Assistant
-- **Effekte-Steuerung**: Wähle zwischen verschiedenen LED-Matrix-Effekten (Snake, Clock, Rain, etc.)
-- **Helligkeit**: Steuere die Helligkeit des Displays (0-255)
-- **Auto-Brightness**: Automatische Helligkeitsanpassung basierend auf Umgebungslicht
-- **Zeitzone**: Konfiguriere die Zeitzone für die Uhr
-- **Sensoren**: Zeigt aktuelle Zeit, Effekt, Helligkeit, IP-Adresse und Sensorwerte
-- **Präsenz-Status**: Zeigt den aktuellen Präsenzstatus an
-- **Geräte-Seite**: Vollständige Geräte-Seite mit Device Info und Diagnostics
-- **Diagnostics**: Detaillierte Diagnose-Informationen direkt in Home Assistant
-- **Automatisierungen**: Nutze alle Entities in HA-Automatisierungen
-- **mDNS Discovery**: Automatische Erkennung von Geräten im Netzwerk
-- **Parallel zu MQTT**: Funktioniert parallel zur bestehenden MQTT-Präsenz-Integration
+- **Display on/off** — control the matrix from Home Assistant
+- **Effect picker** — switch between all matrix effects (Snake, Clock, Rain, …)
+- **Brightness** — 0–255 slider, also exposed as a Light entity
+- **Auto-brightness** — automatic adjustment from the on-board LDR
+- **Timezone** — set the clock's timezone
+- **Sensors** — current time, current effect, brightness, IP address, ambient light
+- **Presence status** — exposes the device's presence flag (if used externally)
+- **Device page** — full device page with metadata and diagnostics
+- **Diagnostics** — detailed diagnostic info inside Home Assistant
+- **Automations** — every entity is usable in HA automations
+- **mDNS discovery** — devices on the local network are detected automatically
+- **Independent of MQTT** — works in parallel to any MQTT control channel on the device
 
 ## Installation
 
-### Über HACS (Empfohlen)
+### Via HACS (recommended)
 
-1. HACS öffnen
-2. Integrations → Drei-Punkte-Menü → "Custom repositories"
+1. Open HACS
+2. Integrations → three-dot menu → **Custom repositories**
 3. Repository URL: `https://github.com/Abrechen2/ikea-obegraensad-homeassistant`
-4. Kategorie: "Integration"
-5. "Add" klicken
-6. Integration installieren
-7. Home Assistant neu starten
+4. Category: **Integration**
+5. Click **Add**
+6. Install the integration
+7. Restart Home Assistant
 
-### Manuelle Installation
+### Manual installation
 
-1. Kopiere den `custom_components/ikea_obegraensad/` Ordner in dein `config/custom_components/` Verzeichnis
-2. Home Assistant neu starten
-3. Gehe zu Settings → Devices & Services → "+" → "Ikea Obegraensad"
+1. Copy the `custom_components/ikea_obegraensad/` folder into your `config/custom_components/` directory
+2. Restart Home Assistant
+3. Go to **Settings → Devices & Services → Add Integration → IKEA Obegraensad**
 
-## Konfiguration
+## Configuration
 
-1. Öffne Home Assistant
-2. Gehe zu Settings → Devices & Services
-3. Klicke auf "+ ADD INTEGRATION"
-4. Suche nach "Ikea Obegraensad"
-5. Gib die IP-Adresse deines Geräts ein (z.B. `192.168.1.100`)
-6. Optional: Port anpassen (Standard: 80)
-7. Optional: Name vergeben
+1. Open Home Assistant
+2. Go to **Settings → Devices & Services**
+3. Click **+ Add Integration**
+4. Search for **IKEA Obegraensad**
+5. Enter the device's IP address (e.g. `192.168.1.100`)
+6. Optional: change the port (default `80`)
+7. Optional: give it a name
 
-## Verwendung
+## Usage
 
-Nach der Installation werden folgende Entities in Home Assistant erstellt und automatisch unter einem Device gruppiert:
+After installation the following entities are created and grouped under one device:
 
 ### Entities
 
-- **Switch: Display** - Ein/Aus-Schalter für das Display
-- **Switch: Auto Brightness** - Ein/Aus-Schalter für die automatische Helligkeitsanpassung
-- **Select: Effect** - Auswahl des aktuellen Effekts (Snake, Clock, Rain, etc.)
-- **Select: Timezone** - Auswahl der Zeitzone
-- **Light: Brightness** - Steuerung der Helligkeit (kann auch als Light-Entity verwendet werden)
-- **Sensor: Time** - Aktuelle Uhrzeit
-- **Sensor: Current Effect** - Aktuell aktiver Effekt
-- **Sensor: Brightness** - Aktuelle Helligkeit
-- **Sensor: Sensor Value** - Wert des Umgebungslichtsensors
-- **Sensor: IP Address** - IP-Adresse des Geräts
-- **Binary Sensor: Presence** - Präsenzstatus
-- **Binary Sensor: Display Status** - Status des Displays
+| Type | Entity | Description |
+|------|--------|-------------|
+| Switch | Display | Display on/off |
+| Switch | Auto Brightness | Toggle automatic brightness adjustment |
+| Select | Effect | Pick the active effect (Snake, Clock, Rain, …) |
+| Select | Timezone | Pick the device timezone |
+| Light  | Brightness | Brightness control (also usable as a Light entity) |
+| Sensor | Time | Current time on the device |
+| Sensor | Current Effect | Currently running effect |
+| Sensor | Brightness | Current brightness |
+| Sensor | Sensor Value | Ambient light sensor reading |
+| Sensor | IP Address | Device IP |
+| Binary Sensor | Presence | Presence status (if used externally) |
+| Binary Sensor | Display Status | Display power state |
 
-### Geräte-Seite
+### Device page
 
-Jedes konfigurierte Gerät erhält eine vollständige Geräte-Seite in Home Assistant mit:
+Each configured device gets a full device page in Home Assistant with:
 
-- **Geräte-Info**: Name, Hersteller (IKEA), Modell (Obegraensad), Firmware-Version und Link zum Web-Interface
-- **Diagnose-Karte**: Vollständiger Status-JSON von `/api/status`, Config-Entry-Informationen und Coordinator-Status
-- **Alle Entities**: Alle Switches, Selects, Lights und Sensoren sind unter dem Device gruppiert
-- **Aktivitäts-Log**: Automatisch generiertes Log aller Entity-Änderungen
+- **Device info:** name, manufacturer (IKEA), model (Obegraensad), firmware version, link to the web interface
+- **Diagnostics card:** full status JSON from `/api/status`, config-entry info, coordinator status
+- **All entities** grouped under the device
+- **Activity log** auto-generated from entity state changes
 
-Die Geräte-Seite kann über **Einstellungen → Geräte & Dienste → [Gerät]** aufgerufen werden.
+The device page is accessible under **Settings → Devices & Services → [Device]**.
 
-### Service: Auto-Brightness konfigurieren
+### Service: Configure auto-brightness
 
-Der Service `ikea_obegraensad.configure_auto_brightness` erlaubt die erweiterte Konfiguration der Auto-Brightness-Funktion:
+The service `ikea_obegraensad.configure_auto_brightness` exposes the advanced auto-brightness configuration:
 
 ```yaml
 service: ikea_obegraensad.configure_auto_brightness
 data:
   entity_id: switch.ikea_clock_auto_brightness
   enabled: true
-  min: 50        # Minimale Helligkeit (0-1023)
-  max: 800       # Maximale Helligkeit (0-1023)
-  sensor_min: 100 # Minimaler Sensorwert (0-1024)
-  sensor_max: 900 # Maximaler Sensorwert (0-1024)
+  min: 50         # minimum brightness (0-1023)
+  max: 800        # maximum brightness (0-1023)
+  sensor_min: 100 # minimum sensor value (0-1024)
+  sensor_max: 900 # maximum sensor value (0-1024)
 ```
 
-### Automatisierung Beispiele
+### Automation examples
 
 ```yaml
 automation:
-  # Wohnzimmer Licht an → Display an
-  - alias: "Wohnzimmer Licht an → Display an"
+  # Living room light on -> display on
+  - alias: "Living room light -> display on"
     trigger:
       - platform: state
-        entity_id: light.wohnzimmer
+        entity_id: light.living_room
         to: "on"
     action:
       - service: switch.turn_on
         target:
           entity_id: switch.ikea_clock_display
 
-  # Automatische Helligkeit bei Sonnenuntergang aktivieren
-  - alias: "Auto-Brightness bei Sonnenuntergang"
+  # Enable auto-brightness at sunset
+  - alias: "Auto-brightness at sunset"
     trigger:
       - platform: sun
         event: sunset
@@ -117,8 +121,8 @@ automation:
         target:
           entity_id: switch.ikea_clock_auto_brightness
 
-  # Effekt bei bestimmter Zeit wechseln
-  - alias: "Abends Clock-Effekt aktivieren"
+  # Switch to clock effect every evening at 8 PM
+  - alias: "Evening clock effect"
     trigger:
       - platform: time
         at: "20:00:00"
@@ -130,29 +134,31 @@ automation:
           option: "clock"
 ```
 
-## API-Voraussetzungen
+## Firmware requirements
 
-Das Arduino-Gerät muss folgende API-Endpoints unterstützen:
+The Arduino device must expose the following API endpoints:
 
-- `GET /api/status` - Gibt JSON mit Status-Daten zurück
-  - Erwartete Felder: `displayEnabled`, `brightness`, `currentEffect`, `time`, `presence`, `sensorValue`, `ipAddress`, `autoBrightnessEnabled`, `autoBrightnessMin`, `autoBrightnessMax`, `autoBrightnessSensorMin`, `autoBrightnessSensorMax`, `timezone`
-- `GET /api/setDisplay?enabled=true|false` - Setzt Display Ein/Aus
-- `GET /api/setBrightness?b=0-1023` - Setzt Helligkeit
-- `GET /effect/{effect_name}` - Wechselt den Effekt
-- `GET /api/setAutoBrightness?enabled=true|false&min=0-1023&max=0-1023&sensorMin=0-1024&sensorMax=0-1024` - Konfiguriert Auto-Brightness
-- `GET /api/setTimezone?tz=Europe/Berlin` - Setzt Zeitzone
+- `GET /api/status` — returns JSON status data
+  Expected fields: `displayEnabled`, `brightness`, `currentEffect`, `time`, `presence`, `sensorValue`, `ipAddress`, `autoBrightnessEnabled`, `autoBrightnessMin`, `autoBrightnessMax`, `autoBrightnessSensorMin`, `autoBrightnessSensorMax`, `timezone`
+- `GET /api/setDisplay?enabled=true|false` — display on/off
+- `GET /api/setBrightness?b=0-1023` — set brightness
+- `GET /effect/{effect_name}` — switch effect
+- `GET /api/setAutoBrightness?enabled=true|false&min=0-1023&max=0-1023&sensorMin=0-1024&sensorMax=0-1024` — configure auto-brightness
+- `GET /api/setTimezone?tz=Europe/Berlin` — set timezone
 
-## Voraussetzungen
+The matching firmware lives in [Abrechen2/IkeaObegraensad](https://github.com/Abrechen2/IkeaObegraensad).
 
-- Home Assistant 2023.1.0 oder höher
-- Ikea Obegraensad Gerät mit Firmware, die `/api/setDisplay` unterstützt
+## Requirements
 
-## Bekannte Probleme / Einschränkungen
+- Home Assistant 2023.1.0 or newer
+- IKEA OBEGRÄNSAD device running firmware that supports `/api/setDisplay`
 
-- Die Integration nutzt Polling (alle 30 Sekunden) für Status-Updates
-- Display-Steuerung funktioniert parallel zur MQTT-Präsenz-Integration
-- Zeitzone-Select zeigt nur die wichtigsten Zeitzonen (ca. 25)
+## Known limitations
 
-## Unterstützung
+- The integration uses polling (every 30 seconds) for status updates
+- Display control works in parallel to any external MQTT control
+- The timezone select only contains the most common timezones (~25)
 
-Bei Problemen bitte ein Issue auf GitHub erstellen.
+## Support
+
+Please open a GitHub issue if you run into problems.
