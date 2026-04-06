@@ -247,33 +247,30 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
 
         current = {**self.config_entry.data, **self.config_entry.options}
 
-        # Build schema dynamically so EntitySelector fields have no default
-        # when no entity is configured yet (empty string is invalid for EntitySelector)
-        temp_entity = current.get(CONF_TEMP_ENTITY) or None
-        humi_entity = current.get(CONF_HUMI_ENTITY) or None
-
-        schema_dict = {}
-        if temp_entity:
-            schema_dict[vol.Optional(CONF_TEMP_ENTITY, default=temp_entity)] = EntitySelector(EntitySelectorConfig(domain="sensor"))
-        else:
-            schema_dict[vol.Optional(CONF_TEMP_ENTITY)] = EntitySelector(EntitySelectorConfig(domain="sensor"))
-
-        if humi_entity:
-            schema_dict[vol.Optional(CONF_HUMI_ENTITY, default=humi_entity)] = EntitySelector(EntitySelectorConfig(domain="sensor"))
-        else:
-            schema_dict[vol.Optional(CONF_HUMI_ENTITY)] = EntitySelector(EntitySelectorConfig(domain="sensor"))
-
-        schema_dict[vol.Optional(CONF_CLOCK_DUR, default=int(current.get(CONF_CLOCK_DUR, 10)))] = NumberSelector(
-            NumberSelectorConfig(min=1, max=3600, step=1, mode=NumberSelectorMode.BOX)
-        )
-        schema_dict[vol.Optional(CONF_TEMP_DUR, default=int(current.get(CONF_TEMP_DUR, 5)))] = NumberSelector(
-            NumberSelectorConfig(min=1, max=3600, step=1, mode=NumberSelectorMode.BOX)
-        )
-        schema_dict[vol.Optional(CONF_HUMI_DUR, default=int(current.get(CONF_HUMI_DUR, 5)))] = NumberSelector(
-            NumberSelectorConfig(min=1, max=3600, step=1, mode=NumberSelectorMode.BOX)
+        schema = vol.Schema(
+            {
+                vol.Optional(CONF_TEMP_ENTITY): EntitySelector(EntitySelectorConfig(domain="sensor")),
+                vol.Optional(CONF_HUMI_ENTITY): EntitySelector(EntitySelectorConfig(domain="sensor")),
+                vol.Optional(CONF_CLOCK_DUR): NumberSelector(NumberSelectorConfig(min=1, max=3600, step=1, mode=NumberSelectorMode.BOX)),
+                vol.Optional(CONF_TEMP_DUR): NumberSelector(NumberSelectorConfig(min=1, max=3600, step=1, mode=NumberSelectorMode.BOX)),
+                vol.Optional(CONF_HUMI_DUR): NumberSelector(NumberSelectorConfig(min=1, max=3600, step=1, mode=NumberSelectorMode.BOX)),
+            }
         )
 
-        return self.async_show_form(step_id="init", data_schema=vol.Schema(schema_dict))
+        suggested = {
+            CONF_CLOCK_DUR: int(current.get(CONF_CLOCK_DUR, 10)),
+            CONF_TEMP_DUR: int(current.get(CONF_TEMP_DUR, 5)),
+            CONF_HUMI_DUR: int(current.get(CONF_HUMI_DUR, 5)),
+        }
+        if current.get(CONF_TEMP_ENTITY):
+            suggested[CONF_TEMP_ENTITY] = current[CONF_TEMP_ENTITY]
+        if current.get(CONF_HUMI_ENTITY):
+            suggested[CONF_HUMI_ENTITY] = current[CONF_HUMI_ENTITY]
+
+        return self.async_show_form(
+            step_id="init",
+            data_schema=self.add_suggested_values_to_schema(schema, suggested),
+        )
 
 
 class CannotConnect(HomeAssistantError):
