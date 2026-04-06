@@ -12,13 +12,10 @@
       },
       "sensor": {
         "title": "SensorClock konfigurieren (optional)",
-        "description": "Wähle die HA-Sensor-Entitäten für Temperatur und Feuchte sowie die Anzeigedauer der Folien. Alle Felder sind optional.",
+        "description": "Wähle die HA-Sensor-Entitäten für Temperatur und Feuchte. Die Anzeigedauern kannst du später über Number-Entitäten direkt in HA einstellen.",
         "data": {
           "temp_entity": "Temperatur-Sensor",
-          "humi_entity": "Feuchte-Sensor",
-          "clock_duration": "Uhrzeit-Dauer (Sek.)",
-          "temp_duration": "Temperatur-Dauer (Sek.)",
-          "humi_duration": "Feuchte-Dauer (Sek.)"
+          "humi_entity": "Feuchte-Sensor"
         }
       }
     },
@@ -34,17 +31,11 @@
   "options": {
     "step": {
       "init": {
-        "title": "Einstellungen",
-        "description": "Gerät konfigurieren und SensorClock einrichten.",
+        "title": "SensorClock — Sensoren auswählen",
+        "description": "Wähle die HA-Sensor-Entitäten für Temperatur und Feuchte. Die Anzeigedauern können über die Number-Entitäten direkt in HA gesteuert werden.",
         "data": {
-          "display_enabled": "Display einschalten",
-          "auto_brightness": "Automatische Helligkeit",
-          "timezone": "Zeitzone",
-          "temp_entity": "Temperatur-Sensor (SensorClock)",
-          "humi_entity": "Feuchte-Sensor (SensorClock)",
-          "clock_duration": "Uhrzeit-Dauer (Sek.)",
-          "temp_duration": "Temperatur-Dauer (Sek.)",
-          "humi_duration": "Feuchte-Dauer (Sek.)"
+          "temp_entity": "Temperatur-Sensor",
+          "humi_entity": "Feuchte-Sensor"
         }
       }
     }

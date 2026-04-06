@@ -13,10 +13,7 @@ from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers import entity_registry as er
 
-from .const import (
-    DOMAIN, DEFAULT_PORT, DEFAULT_TIMEOUT, BRIGHTNESS_MAX_API,
-    CONF_DISPLAY_ENABLED, CONF_AUTO_BRIGHTNESS, CONF_TIMEZONE_OPT,
-)
+from .const import DOMAIN, DEFAULT_PORT, DEFAULT_TIMEOUT, BRIGHTNESS_MAX_API
 from .coordinator import IkeaObegraensadDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -59,6 +56,7 @@ PLATFORMS: list[Platform] = [
     Platform.LIGHT,
     Platform.SENSOR,
     Platform.BINARY_SENSOR,
+    Platform.NUMBER,
 ]
 
 
@@ -89,17 +87,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
     async def async_options_updated(hass, entry) -> None:
-        """Apply device settings and re-wire sensor listeners when options change."""
+        """Re-wire sensor listeners when options are changed."""
         coord = hass.data[DOMAIN].get(entry.entry_id)
         if coord is None:
             return
-        opts = entry.options
-        if CONF_DISPLAY_ENABLED in opts:
-            await coord.async_set_display(opts[CONF_DISPLAY_ENABLED])
-        if CONF_AUTO_BRIGHTNESS in opts:
-            await coord.async_set_auto_brightness(enabled=opts[CONF_AUTO_BRIGHTNESS])
-        if CONF_TIMEZONE_OPT in opts:
-            await coord.async_set_timezone(opts[CONF_TIMEZONE_OPT])
         sensor_config = {**entry.data, **entry.options}
         await coord.async_setup_sensor_listeners(hass, sensor_config)
 
